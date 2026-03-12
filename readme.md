@@ -21,8 +21,7 @@ START → [generator] → [validator] → END (if passed or max attempts reached
 npm install
 
 # 2. Configure environment
-cp .env.example .env
-# Edit .env and add your OPENROUTER_API_KEY
+# Edit your .env and add your OPENROUTER_API_KEY
 ```
 
 ## Usage
@@ -33,20 +32,14 @@ npx tsx src/index.ts path/to/foo.component.ts
 
 # Generate tests for a service
 npx tsx src/index.ts path/to/foo.service.ts
-
-# Or via npm script
-npm run generate path/to/foo.component.ts
 ```
-
-> `tsx` runs TypeScript directly — no build step needed for development.
-> Run `npm run build` to compile to `dist/` for production.
 
 ## Configuration
 
 | Env variable         | Default                            | Description                  |
 |----------------------|------------------------------------|------------------------------|
 | `OPENROUTER_API_KEY` | *(required)*                       | Your OpenRouter API key      |
-| `MODEL_NAME`         | `google/gemini-2.0-flash-lite-001` | Any model on OpenRouter      |
+| `MODEL_NAME`         | `meta-llama/llama-3.3-70b-instruct:free` | Any model on OpenRouter      |
 
 Swap to a more powerful model for better results:
 ```

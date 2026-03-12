@@ -16,7 +16,7 @@ export function getModel(): ChatOpenAI {
 
   return new ChatOpenAI({
     modelName: MODEL_NAME,
-    apiKey: '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',
+    apiKey: process.env.OPENROUTER_API_KEY,
     temperature: 0.1, // low temperature for deterministic code output
     configuration: {
       baseURL: "https://openrouter.ai/api/v1",
