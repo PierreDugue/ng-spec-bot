@@ -1,10 +1,15 @@
 import { Annotation } from "@langchain/langgraph";
+import { TestFramework } from "./utils.js";
 
 /**
  * The shared state passed between all nodes in the graph.
  */
 export const AgentState = Annotation.Root({
   // ── Inputs ──────────────────────────────────────────────────────────────
+  testFramework: Annotation<TestFramework>({
+      reducer: (_, y) => y,
+      default: () => TestFramework.vitest
+  }),
   /** Raw TypeScript source of the component / service under test */
   componentCode: Annotation<string>({
     reducer: (_, y) => y,

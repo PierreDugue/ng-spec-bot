@@ -4,6 +4,7 @@ import fs from "fs";
 import { graph } from "./graph.js";
 import { getAngularContext, writeSpec } from "./tools/file-reader.js";
 import type { GraphState } from "./state.js";
+import { TestFramework } from "./utils.js";
 
 /**
  * Walks up the directory tree until it finds a package.json,
@@ -22,6 +23,7 @@ function findProjectRoot(fromPath: string): string {
 async function run(): Promise<void> {
   // ── 1. Resolve the target file ──────────────────────────────────────────
   const filePath: string | undefined = process.argv[2];
+  const testFramework: TestFramework = process.argv[3] as TestFramework ?? TestFramework.vitest;
 
   if (!filePath) {
     console.error(
@@ -48,6 +50,7 @@ async function run(): Promise<void> {
 
   // ── 2. Run the graph ─────────────────────────────────────────────────────
   const initialInput: Partial<GraphState> = {
+    testFramework,
     componentCode,
     templateCode,
     filePath: absolutePath,
@@ -80,7 +83,7 @@ async function run(): Promise<void> {
 
   console.log(`\n🎉 Done!`);
   console.log(`   Static validation : ${finalState.isPassed   ? "✅ passed" : "⚠️  failed"}`);
-  console.log(`   Jest run          : ${finalState.testPassed ? "✅ all tests green" : "⚠️  some tests failed"}`);
+  console.log(`   Test run          : ${finalState.testPassed ? "✅ all tests green" : "⚠️  some tests failed"}`);
   console.log(`   Written to        : ${specPath}\n`);
 }
 

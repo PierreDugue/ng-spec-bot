@@ -17,6 +17,7 @@ export interface RunnerResult {
  * @param projectRoot  - Root of the Angular project (where jest.config lives).
  */
 export function runSpec(
+  testFramework: string,
   spec: string,
   sourceFile: string,
   projectRoot: string
@@ -36,11 +37,16 @@ export function runSpec(
 
   try {
     fs.writeFileSync(tempSpecPath, clean, "utf-8");
-
-    // Build the jest command
-    // We run only this specific file and bail after first failure for speed
-    const jestBin = path.join(projectRoot, "node_modules", ".bin", "jest");
-    const cmd = `"${jestBin}" --testPathPatterns="${tempSpecPath}" --no-coverage --bail 1 --forceExit`;
+    let cmd;
+    
+    if (testFramework === 'jest') {
+      // Build the jest command
+      // We run only this specific file and bail after first failure for speed
+      const jestBin = path.join(projectRoot, "node_modules", ".bin", "jest");
+      cmd = `"${jestBin}" --testPathPatterns="${tempSpecPath}" --no-coverage --bail 1 --forceExit`;
+    } else {
+      cmd = `npx vitest ${tempSpecPath}`
+    }
 
     let output = "";
     try {
@@ -56,7 +62,7 @@ export function runSpec(
       // execSync throws when Jest exits with non-zero code (test failures)
       const err = execError as { stdout?: string; stderr?: string };
       output = [err.stdout ?? "", err.stderr ?? ""].join("\n");
-      const errors = extractJestErrors(output);
+      const errors = extractTestErrors(output);
       return { passed: false, errors, output };
     }
   } finally {
@@ -68,26 +74,38 @@ export function runSpec(
 }
 
 /**
- * Extracts the most useful lines from Jest's error output.
+ * Extracts the most useful lines from Jest's or Vitest's error output.
  * Strips ANSI codes and focuses on failure messages.
  */
-function extractJestErrors(rawOutput: string): string[] {
+function extractTestErrors(rawOutput: string): string[] {
   // Strip ANSI escape codes
   const clean = rawOutput.replace(/\x1B\[[0-9;]*m/g, "");
-
   const errors: string[] = [];
   const lines = clean.split("\n");
-
   let capturing = false;
+
   for (const line of lines) {
-    // Start capturing at "● Test suite failed" or "● component ›"
-    if (/^\s*●/.test(line)) {
+    // Jest: starts with "●"
+    // Vitest: starts with "FAIL" block headers or "❯" / "×" failure markers
+    if (
+      /^\s*●/.test(line) ||                          // Jest failure block
+      /^\s*(FAIL|FAILED)\s+/.test(line) ||           // Vitest file-level failure
+      /^\s*[×✕❯]\s+/.test(line) ||                  // Vitest test-level failure markers
+      /^\s*AssertionError/.test(line) ||             // Vitest assertion errors
+      /^\s*Error:/.test(line)                        // Generic errors (both)
+    ) {
       capturing = true;
     }
-    // Stop at Jest summary lines
-    if (capturing && /^(Tests|Test Suites|Snapshots|Time):/.test(line)) {
+
+    // Stop at Jest summary lines or Vitest summary lines
+    if (
+      capturing &&
+      /^(Tests|Test Suites|Snapshots|Time):/.test(line) ||  // Jest summary
+      /^(✓|✗|×)?\s*(Test Files|Tests|Duration)\s+/.test(line)   // Vitest summary
+    ) {
       capturing = false;
     }
+
     if (capturing && line.trim().length > 0) {
       errors.push(line);
     }

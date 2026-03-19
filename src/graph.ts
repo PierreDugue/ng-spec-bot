@@ -4,7 +4,7 @@ import { getModel } from "./model.js";
 import { validateSpec } from "./tools/validator.js";
 import { runSpec } from "./tools/test-runner.js";
 import {
-  SYSTEM_PROMPT,
+  buildSystemPrompt,
   buildGeneratePrompt,
   buildFixPrompt,
 } from "./prompts.js";
@@ -22,12 +22,13 @@ async function generatorNode(
 
   const humanMessage: string = isRetry
     ? buildFixPrompt(
-        state.componentCode,
-        state.templateCode,
-        state.generatedSpec,
-        state.errorLog
+      state.componentCode,
+      state.templateCode,
+      state.generatedSpec,
+      state.errorLog,
+      state.testFramework,
       )
-    : buildGeneratePrompt(state.componentCode, state.templateCode);
+    : buildGeneratePrompt(state.componentCode, state.templateCode, state.testFramework);
 
   console.log(
     isRetry
@@ -36,7 +37,7 @@ async function generatorNode(
   );
 
   const response = await getModel().invoke([
-    ["system", SYSTEM_PROMPT],
+    ["system", buildSystemPrompt(state.testFramework)],
     ["human", humanMessage],
   ]);
 
@@ -76,9 +77,10 @@ async function validatorNode(
 async function runnerNode(
   state: GraphState
 ): Promise<Partial<GraphState>> {
-  console.log("  🧪 Running Jest…");
+  console.log("  🧪 Running tests...");
 
   const { passed, errors, output } = runSpec(
+    state.testFramework,
     state.generatedSpec,
     state.filePath,
     state.projectRoot
@@ -87,7 +89,7 @@ async function runnerNode(
   if (passed) {
     console.log("  ✅ All tests passed!");
   } else {
-    console.log(`  ❌ Jest run failed (${errors.length} error(s)):`);
+    console.log(`  ❌ Test run failed (${errors.length} error(s)):`);
     errors.slice(0, 5).forEach((e) => console.log(`     ${e}`));
   }
 
@@ -127,7 +129,7 @@ function routeAfterRunner(state: GraphState): string | typeof END {
     console.log(`  ⚠️  Max attempts reached — exiting with last result`);
     return END;
   }
-  console.log("  ➡️  Tests failed → retrying generator with Jest errors");
+  console.log("  ➡️  Tests failed → retrying generator with test errors");
   return "generator";
 }
 

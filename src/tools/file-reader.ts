@@ -22,8 +22,6 @@ export function getAngularContext(tsFilePath: string): AngularContext {
 
   const componentCode = fs.readFileSync(absolutePath, "utf-8");
 
-  // Components: foo.component.ts → foo.component.html
-  // Services:   foo.service.ts   → no HTML (templateCode stays empty)
   const htmlFilePath = absolutePath.replace(/\.ts$/, ".html");
   const templateCode = fs.existsSync(htmlFilePath)
     ? fs.readFileSync(htmlFilePath, "utf-8")
