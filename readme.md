@@ -1,6 +1,6 @@
 # Angular Test Agent
 
-An AI agent that automatically generates Jest unit tests for Angular components and services using LangChain + LangGraph, written in TypeScript.
+An AI agent that automatically generates unit tests (vitest by default) for Angular components and services using LangChain + LangGraph, written in TypeScript.
 
 ## How it works
 
@@ -10,7 +10,7 @@ START → [generator] → [validator] → END (if passed or max attempts reached
                      [generator] ← retry with errors as feedback
 ```
 
-1. **Generator** — sends your component code + template to the LLM, which writes a complete Jest spec.
+1. **Generator** — sends your component code + template to the LLM, which writes a complete spec file.
 2. **Validator** — statically checks the spec for required patterns (TestBed, describe, it, expect), forbidden patterns (.only, .skip, console.log), and balanced braces.
 3. If validation fails, the errors are fed back to the generator (up to 3 attempts).
 
@@ -27,11 +27,12 @@ npm install
 ## Usage
 
 ```bash
-# Generate tests for a component
-npx tsx src/index.ts path/to/foo.component.ts
+# Generate tests
+npx tsx src/index.ts path/to/foo.ts
 
-# Generate tests for a service
-npx tsx src/index.ts path/to/foo.service.ts
+# Using jest
+npx tsx src/index.ts path/to/foo.ts jest
+
 ```
 
 ## Configuration
